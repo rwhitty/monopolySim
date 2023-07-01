@@ -132,7 +132,7 @@ class Chance(Square):
         chosen_card = active_cards.pop(card_index)
         chosen_card(player)
         if not active_cards:
-            active_cards = all_cards
+            active_cards = self.all_cards
     
 class CommunityChest(Square):
     cards = []
