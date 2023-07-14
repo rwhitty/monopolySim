@@ -78,7 +78,16 @@ class Chance(Square):
         player.update_position(0)
     def advance_to_illinois(player):
         player.update_position(24)
-    def advance_to_railroad(player):
+    def advance_to_railroad_1(player):
+        if 6 <= player.position <= 15:
+            player.update_position(15)
+        elif 16 <= player.position <= 25:
+            player.update_position(25)
+        elif 26 <= player.position <= 35:
+            player.update_position(35)
+        else:
+            player.update_position(5)
+    def advance_to_railroad_2(player):
         if 6 <= player.position <= 15:
             player.update_position(15)
         elif 16 <= player.position <= 25:
@@ -115,12 +124,17 @@ class Chance(Square):
         for prop in player.properties:
             if type(prop) == Building:
                 player.balance -= 25*prop.houses
+                board[20].balance += 25*prop.houses
                 player.balance -= 100*prop.hotels
+                board[20].balance += 100*prop.hotels
+    def speeding_fine(player):
+        player.balance -= 15
+        board[20].balance += 20
     
     all_cards = [
-            advance_to_boardwalk, advance_to_go, advance_to_illinois, advance_to_railroad, advance_to_reading,
-            advance_to_st_charles, advance_to_utility, back_three_spaces, bank_pays_dividend, building_loan_matures,
-            chairman_of_board, get_out_of_jail, go_to_jail, property_repairs
+            advance_to_boardwalk, advance_to_go, advance_to_illinois, advance_to_railroad_1, advance_to_railroad_2,
+            advance_to_reading, advance_to_st_charles, advance_to_utility, back_three_spaces, bank_pays_dividend, 
+            building_loan_matures, chairman_of_board, get_out_of_jail, go_to_jail, property_repairs, speeding_fine
             ]
     
     active_cards = list(all_cards)
@@ -135,9 +149,65 @@ class Chance(Square):
             active_cards = self.all_cards
     
 class CommunityChest(Square):
-    cards = []
+    def advance_to_go(player):
+        player.update_position(0)
+    def bank_error(player):
+        player.balance += 200
+    def beauty_contest(player):
+        player.balance += 10
+    def birthday(player):
+        player.balance += 30
+        board[20].balance -= 30
+    def consultancy_fee(player):
+        player.balance += 25
+    def doctors_fee(player):
+        player.balance -= 50
+        board[20].balance += 50
+    def get_out_of_jail(player):
+        player.jailed = -1
+    def go_to_jail(player):
+        player.jailed += 1
+        player.update_position(10)
+    def holiday_fund_matures(player):
+        player.balance += 100
+    def hospital_fees(player):
+        player.balance -= 100
+    def income_tax_refund(player):
+        player.balance += 20
+        board[20].balance += 100
+    def inherit_money(player):
+        player.balance += 100
+    def life_insurance_matures(player):
+        player.balance += 100
+    def school_fees(player):
+        player.balance -= 50
+        board[20].balance += 50
+    def sell_stock(player):
+        player.balance += 50
+    def street_repairs(player):
+        for prop in player.properties:
+            if type(prop) == Building:
+                player.balance -= 40*prop.houses
+                board[20].balance += 40*prop.houses
+                player.balance -= 115*prop.hotels
+                board[20].balance += 115*prop.hotels
+
+    all_cards = [
+            advance_to_go, bank_error, beauty_contest, birthday, consultancy_fee, doctors_fee,
+            get_out_of_jail, go_to_jail, holiday_fund_matures, hospital_fees, income_tax_refund, 
+            inherit_money, life_insurance_matures, school_fees, sell_stock, street_repairs
+            ]
+    
+    active_cards = list(all_cards)
+
     def __init__(self, position, name):
         super().__init__(position, name)
+    def land_action(self, player):
+        card_index = np.random.choice(np.arange(len(active_cards)))
+        chosen_card = active_cards.pop(card_index)
+        chosen_card(player)
+        if not active_cards:
+            active_cards = self.all_cards
 
 class Player:
     def roll():
@@ -160,13 +230,13 @@ class Player:
             prop.rent = prop.rents[0]
     
     def update_position(self, new_pos):
-        if not self.jailed and new_pos < self.position:
+        if self.jailed <= 0 and new_pos < self.position:
             self.balance += 200
         self.position = new_pos
         board[new_pos].land_action(self)
             
     def take_turn(self):
-        curr_roll = roll()
+        curr_roll = Player.roll()
         if self.jailed:
             if curr_roll[0] == curr_roll[1]:
                 self.jailed = 0
@@ -185,7 +255,7 @@ class Player:
                     self.jailed += 1
                     self.update_position(10)
                     break
-                curr_roll = roll()
+                curr_roll = Player.roll()
             self.update_position((self.position + sum(curr_roll)) % 40)
 
 board = [
