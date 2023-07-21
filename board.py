@@ -66,10 +66,18 @@ class FreeParking(Square):
     def __init__(self):
         super().__init__(20, "Free Parking")
         self.balance = 0
+    def land_action(self, player):
+        player.balance += self.balance
+        self.balance = 0
+        self.visits += 1
         
 class GoToJail(Square):
     def __init__(self):
         super().__init__(30, "Go To Jail")
+    def land_action(self, player):
+        player.jailed += 1
+        player.update_position(10)
+        self.visits += 1
 
 class Chance(Square):
     def advance_to_boardwalk(player):
@@ -142,11 +150,15 @@ class Chance(Square):
     def __init__(self, position, name):
         super().__init__(position, name)
     def land_action(self, player):
+        if not Chance.active_cards:
+            Chance.active_cards = list(Chance.all_cards)
+        active_cards = Chance.active_cards
         card_index = np.random.choice(np.arange(len(active_cards)))
         chosen_card = active_cards.pop(card_index)
         chosen_card(player)
         if not active_cards:
             active_cards = self.all_cards
+        self.visits += 1
     
 class CommunityChest(Square):
     def advance_to_go(player):
@@ -203,11 +215,15 @@ class CommunityChest(Square):
     def __init__(self, position, name):
         super().__init__(position, name)
     def land_action(self, player):
+        if not CommunityChest.active_cards:
+            CommunityChest.active_cards = list(CommunityChest.all_cards)
+        active_cards = CommunityChest.active_cards
         card_index = np.random.choice(np.arange(len(active_cards)))
         chosen_card = active_cards.pop(card_index)
         chosen_card(player)
         if not active_cards:
             active_cards = self.all_cards
+        self.visits += 1
 
 class Player:
     def roll():
