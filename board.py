@@ -14,6 +14,7 @@ class Property(Square):
         self.price = price
         self.rent = 0
         self.profit = 0
+        self.houses = 0
         self.owner = None
     def land_action(self, player):
         if not self.owner:
@@ -131,10 +132,12 @@ class Chance(Square):
     def property_repairs(player):
         for prop in player.properties:
             if type(prop) == Building:
-                player.balance -= 25*prop.houses
-                board[20].balance += 25*prop.houses
-                player.balance -= 100*prop.hotels
-                board[20].balance += 100*prop.hotels
+                if prop.houses < 5:
+                    player.balance -= 25*prop.houses
+                    board[20].balance += 25*prop.houses
+                else:
+                    player.balance -= 100
+                    board[20].balance += 100
     def speeding_fine(player):
         player.balance -= 15
         board[20].balance += 20
@@ -199,10 +202,12 @@ class CommunityChest(Square):
     def street_repairs(player):
         for prop in player.properties:
             if type(prop) == Building:
-                player.balance -= 40*prop.houses
-                board[20].balance += 40*prop.houses
-                player.balance -= 115*prop.hotels
-                board[20].balance += 115*prop.hotels
+                if prop.houses < 5:
+                    player.balance -= 40*prop.houses
+                    board[20].balance += 40*prop.houses
+                else:
+                    player.balance -= 115
+                    board[20].balance += 115
 
     all_cards = [
             advance_to_go, bank_error, beauty_contest, birthday, consultancy_fee, doctors_fee,
@@ -242,6 +247,7 @@ class Player:
         if prop.price < self.balance * self.risk:
             self.balance -= prop.price
             prop.owner = self
+            self.properties.append(prop)
             prop.profit = -(prop.price)
             prop.rent = prop.rents[0]
     
